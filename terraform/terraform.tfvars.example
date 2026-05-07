@@ -1,0 +1,24 @@
+# terraform/terraform.tfvars.example
+subscription_id = "YOUR_SUBSCRIPTION_ID"
+app_name        = "elearning"
+environment     = "dev"
+location        = "eastus"
+
+# PostgreSQL
+db_admin_username = "elearningadmin"
+db_admin_password = "Your@Secure!Pass123"  # Change this!
+db_name           = "elearning"
+
+# Redis
+redis_capacity = 0 # Basic tier
+redis_family   = "C"
+redis_sku      = "Basic"
+
+# Application
+frontend_url           = "https://your-frontend-url.com"
+jwt_secret             = "your-jwt-secret"
+jwt_refresh_secret     = "your-jwt-refresh-secret"
+stripe_secret_key      = "sk_test_your_stripe_key"
+cloudinary_cloud_name  = "your-cloudinary-name"
+cloudinary_api_key     = "your-cloudinary-key"
+cloudinary_api_secret  = "your-cloudinary-secret"

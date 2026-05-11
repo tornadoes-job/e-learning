@@ -64,8 +64,6 @@ jobs:
 
       - name: Build frontend
         run: npm run build:frontend
-        env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
   deploy:
     runs-on: ubuntu-latest

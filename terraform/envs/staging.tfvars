@@ -2,6 +2,7 @@
 app_name    = "elearning"
 environment = "staging"
 location    = "eastus"
+db_location = ""
 
 # PostgreSQL
 db_name = "elearning"

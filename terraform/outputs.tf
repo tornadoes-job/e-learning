@@ -96,7 +96,7 @@ output "storage_account_name" {
   description = "Storage account name for frontend"
 }
 
-output "cdn_endpoint_fqdn" {
-  value       = azurerm_cdn_endpoint.main.fqdn
-  description = "CDN endpoint FQDN"
+output "frontend_static_website_url" {
+  value       = azurerm_storage_account.frontend.primary_web_endpoint
+  description = "Static website URL for frontend"
 }

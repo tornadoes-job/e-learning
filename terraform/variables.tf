@@ -26,6 +26,12 @@ variable "location" {
   default     = "eastus"
 }
 
+variable "db_location" {
+  type        = string
+  description = "Azure region for PostgreSQL flexible server"
+  default     = ""
+}
+
 # PostgreSQL
 variable "db_admin_username" {
   type        = string

@@ -76,7 +76,7 @@ resource "azurerm_container_registry" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   sku                 = "Standard"
-  admin_enabled       = false
+  admin_enabled       = true
 
   network_rule_bypass_option = "AzureServices"
 
@@ -96,8 +96,8 @@ resource "azurerm_container_registry_scope_map" "pull" {
 
 # PostgreSQL Flexible Server
 resource "azurerm_postgresql_flexible_server" "main" {
-  name                   = "ps-${var.app_name}-${var.environment}"
-  location               = azurerm_resource_group.main.location
+  name                   = "ps-${var.app_name}-${var.environment}-db"
+  location               = var.db_location != "" ? var.db_location : azurerm_resource_group.main.location
   resource_group_name    = azurerm_resource_group.main.name
   administrator_login    = var.db_admin_username
   administrator_password = var.db_admin_password
@@ -135,7 +135,6 @@ resource "azurerm_redis_cache" "main" {
   capacity            = var.redis_capacity
   family              = var.redis_family
   sku_name            = var.redis_sku
-  enable_non_ssl_port = false
   minimum_tls_version = "1.2"
 
   tags = local.common_tags
@@ -190,9 +189,9 @@ resource "azurerm_monitor_metric_alert" "high_cpu" {
     metric_namespace  = "Microsoft.App/containerApps"
   }
 
-  window_size         = "PT5M"
-  evaluation_frequency = "PT1M"
-  auto_mitigate       = true
+  window_size = "PT5M"
+  frequency   = "PT1M"
+  auto_mitigate = true
 
   tags = local.common_tags
 }
@@ -212,9 +211,9 @@ resource "azurerm_monitor_metric_alert" "high_memory" {
     metric_namespace  = "Microsoft.App/containerApps"
   }
 
-  window_size         = "PT5M"
-  evaluation_frequency = "PT1M"
-  auto_mitigate       = true
+  window_size = "PT5M"
+  frequency   = "PT1M"
+  auto_mitigate = true
 
   tags = local.common_tags
 }
@@ -224,19 +223,19 @@ resource "azurerm_monitor_metric_alert" "high_error_rate" {
   name                = "alert-high-errors-${var.app_name}-${var.environment}"
   resource_group_name = azurerm_resource_group.main.name
   scopes              = [azurerm_application_insights.backend.id]
-  description         = "Alert when error rate is high"
+  description         = "Alert when the Application Insights failed request count is high"
 
   criteria {
-    metric_name       = "FailedRequestsPercentage"
+    metric_name       = "requests/failed"
     operator          = "GreaterThan"
-    threshold         = 5
-    aggregation       = "Average"
+    threshold         = 10
+    aggregation       = "Count"
     metric_namespace  = "microsoft.insights/components"
   }
 
-  window_size         = "PT5M"
-  evaluation_frequency = "PT1M"
-  auto_mitigate       = true
+  window_size = "PT5M"
+  frequency   = "PT1M"
+  auto_mitigate = true
 
   tags = local.common_tags
 }
@@ -256,9 +255,9 @@ resource "azurerm_monitor_metric_alert" "db_high_cpu" {
     metric_namespace  = "Microsoft.DBforPostgreSQL/flexibleServers"
   }
 
-  window_size         = "PT5M"
-  evaluation_frequency = "PT1M"
-  auto_mitigate       = true
+  window_size = "PT5M"
+  frequency   = "PT1M"
+  auto_mitigate = true
 
   tags = local.common_tags
 }
@@ -278,9 +277,9 @@ resource "azurerm_monitor_metric_alert" "redis_high_cpu" {
     metric_namespace  = "Microsoft.Cache/redis"
   }
 
-  window_size         = "PT5M"
-  evaluation_frequency = "PT1M"
-  auto_mitigate       = true
+  window_size = "PT5M"
+  frequency   = "PT1M"
+  auto_mitigate = true
 
   tags = local.common_tags
 }
@@ -308,8 +307,14 @@ resource "azurerm_container_app" "backend" {
   }
 
   registry {
-    server   = azurerm_container_registry.main.login_server
-    identity = azurerm_container_app.backend.identity[0].principal_id
+    server               = azurerm_container_registry.main.login_server
+    username             = azurerm_container_registry.main.admin_username
+    password_secret_name = "acr-password"
+  }
+
+  secret {
+    name  = "acr-password"
+    value = azurerm_container_registry.main.admin_password
   }
 
   template {
@@ -392,41 +397,17 @@ resource "azurerm_storage_account" "frontend" {
   https_traffic_only_enabled = true
   min_tls_version          = "TLS1_2"
 
-  static_website {
-    index_document     = "index.html"
-    error_404_document = "index.html"
-  }
-
   tags = local.common_tags
 }
 
-# CDN Profile
-resource "azurerm_cdn_profile" "main" {
-  name                = "cdn-${var.app_name}-${var.environment}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  sku                 = "Standard_Microsoft"
-
-  tags = local.common_tags
+resource "azurerm_storage_account_static_website" "frontend" {
+  storage_account_id = azurerm_storage_account.frontend.id
+  index_document     = "index.html"
+  error_404_document = "index.html"
 }
 
-# CDN Endpoint
-resource "azurerm_cdn_endpoint" "main" {
-  name                          = "cdne-${var.app_name}-${var.environment}"
-  profile_name                  = azurerm_cdn_profile.main.name
-  location                      = azurerm_resource_group.main.location
-  resource_group_name           = azurerm_resource_group.main.name
-  origin_host_header            = azurerm_storage_account.frontend.primary_blob_host
-  querystring_caching_behaviour = "IgnoreQueryString"
-  is_compression_enabled        = true
-
-  origin {
-    name      = "blob"
-    host_name = azurerm_storage_account.frontend.primary_blob_host
-  }
-
-  tags = local.common_tags
-}
+# CDN is disabled because AzureRM no longer allows creating new CDN resources after Oct 1, 2025.
+# Frontend will be served via Storage Static Website directly.
 
 # Azure Monitor Dashboard
 resource "azurerm_portal_dashboard" "main" {
@@ -520,9 +501,9 @@ resource "azurerm_portal_dashboard" "main" {
                   }
                   metrics = [
                     {
-                      name            = "Failed Requests %"
+                      name            = "Failed Requests"
                       resourceId      = azurerm_application_insights.backend.id
-                      metricName      = "FailedRequestsPercentage"
+                      metricName      = "requests/failed"
                       aggregationType = 4
                       namespace       = "microsoft.insights/components"
                       metricDisplayMode = 0

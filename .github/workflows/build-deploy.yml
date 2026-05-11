@@ -136,11 +136,6 @@ jobs:
             --overwrite \
             --auth-mode login
 
-      - name: Purge CDN cache
-        if: env.CDN_PROFILE != '' && env.CDN_ENDPOINT != ''
-        run: |
-          az cdn endpoint purge \
-            --resource-group "${{ secrets.RESOURCE_GROUP }}" \
-            --profile-name "${{ env.CDN_PROFILE }}" \
-            --name "${{ env.CDN_ENDPOINT }}" \
-            --content-paths '/*'
+      # CDN désactivé dans Terraform (frontend servi via Storage Static Website).
+      # Purge CDN volontairement supprimée pour éviter des échecs/configs inutiles.
+

@@ -38,12 +38,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Set up Terraform Azure Auth
+        run: |
+          echo "ARM_CLIENT_ID=${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}" >> $GITHUB_ENV
+
       - name: Terraform Init
         working-directory: ./terraform
         run: |
           terraform init \
-            -backend-config="resource_group_name=${{ secrets.TF_STATE_RG }}" \
-            -backend-config="storage_account_name=${{ secrets.TF_STATE_SA }}" \
+            -backend-config="resource_group_name=rg-terraform-state" \
+            -backend-config="storage_account_name=elearningtfstate12345" \
             -backend-config="container_name=tfstate" \
             -backend-config="key=${{ github.ref == 'refs/heads/main' && 'prod.tfstate' || 'staging.tfstate' }}"
 
@@ -132,12 +139,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Set up Terraform Azure Auth
+        run: |
+          echo "ARM_CLIENT_ID=${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}" >> $GITHUB_ENV
+
       - name: Terraform Init
         working-directory: ./terraform
         run: |
           terraform init \
-            -backend-config="resource_group_name=${{ secrets.TF_STATE_RG }}" \
-            -backend-config="storage_account_name=${{ secrets.TF_STATE_SA }}" \
+            -backend-config="resource_group_name=rg-terraform-state" \
+            -backend-config="storage_account_name=elearningtfstate12345" \
             -backend-config="container_name=tfstate" \
             -backend-config="key=${{ github.ref == 'refs/heads/main' && 'prod.tfstate' || 'staging.tfstate' }}"
 

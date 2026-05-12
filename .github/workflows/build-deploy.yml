@@ -114,7 +114,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./backend/Dockerfile.prod
+          file: backend/Dockerfile.prod
           push: true
           tags: |
             ${{ steps.tf-output.outputs.acr_name }}.azurecr.io/e-learning-backend:latest

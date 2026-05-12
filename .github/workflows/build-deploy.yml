@@ -71,9 +71,6 @@ jobs:
     needs: build-and-test
     if: github.event_name == 'push'
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
-    env:
-      CDN_PROFILE: ${{ secrets.CDN_PROFILE }}
-      CDN_ENDPOINT: ${{ secrets.CDN_ENDPOINT }}
 
     steps:
       - name: Checkout code

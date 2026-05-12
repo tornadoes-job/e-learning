@@ -55,7 +55,7 @@ STATE_RG=${STATE_RG:-rg-terraform-state}
 read -p "Enter storage account name for state (default: stterraformstate): " STATE_SA
 STATE_SA=${STATE_SA:-stterraformstate}
 
-az group create --name "$STATE_RG" --location eastus
+az group create --name "$STATE_RG" --location "France Central"
 echo "✅ Resource group created: $STATE_RG"
 
 az storage account create \

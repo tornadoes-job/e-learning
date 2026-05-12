@@ -28,7 +28,7 @@ PostgreSQL + Redis + Cloudinary
 az login
 
 # 2. Create resource group for terraform state
-az group create --name rg-terraform-state --location eastus
+az group create --name rg-terraform-state --location "France Central"
 
 # 3. Create storage account
 az storage account create \

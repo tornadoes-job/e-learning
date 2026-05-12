@@ -2,12 +2,13 @@
 subscription_id = "YOUR_SUBSCRIPTION_ID"
 app_name        = "elearning"
 environment     = "dev"
-location        = "eastus"
+location        = "France Central"
 
 # PostgreSQL
 db_admin_username = "elearningadmin"
 db_admin_password = "Your@Secure!Pass123"  # Change this!
 db_name           = "elearning"
+db_sku            = "B_Standard_B1ms"
 
 # Redis
 redis_capacity = 0 # Basic tier
@@ -22,3 +23,6 @@ stripe_secret_key      = "sk_test_your_stripe_key"
 cloudinary_cloud_name  = "your-cloudinary-name"
 cloudinary_api_key     = "your-cloudinary-key"
 cloudinary_api_secret  = "your-cloudinary-secret"
+
+# Note: DO NOT commit actual secrets to this file. Use GitHub Secrets
+# (TF_VAR_* environment variables in CI/CD) for sensitive values.

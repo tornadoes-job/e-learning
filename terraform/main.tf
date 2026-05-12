@@ -7,11 +7,12 @@ terraform {
     }
   }
 
-  # Using local backend for now - migrate to Azure Storage by running:
-  # terraform init -migrate-state -backend-config=backend.tfvars
-  backend "local" {
-    path = ".terraform/state/terraform.tfstate"
-  }
+  # Backend configured dynamically via -backend-config in CI/CD
+  # For local development, init with:
+  # terraform init -backend-config="resource_group_name=rg-terraform-state" \
+  #                -backend-config="storage_account_name=stterraformstate" \
+  #                -backend-config="container_name=tfstate" \
+  #                -backend-config="key=staging.tfstate"
 }
 
 provider "azurerm" {

@@ -96,11 +96,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Get Azure Resource Names from Terraform Output
+        id: tf-output
+        run: |
+          # Derive resource names from naming convention
+          RG_NAME="rg-elearning-${{ env.AZURE_ENV_SUFFIX }}"
+          ACR_NAME="elearning${{ env.AZURE_ENV_SUFFIX }}"  # terraform: ${replace(var.app_name, "-", "")}${var.environment}
+          
+          echo "resource_group=${RG_NAME}" >> $GITHUB_OUTPUT
+          echo "acr_name=${ACR_NAME}" >> $GITHUB_OUTPUT
+
       - name: Login to Azure Container Registry
         run: |
-          ACR_NAME=$(echo "${{ secrets.ACR_LOGIN_SERVER }}" | cut -d'.' -f1)
-          echo "ACR_NAME=${ACR_NAME}" >> $GITHUB_ENV
-          az acr login --name $ACR_NAME
+          az acr login --name ${{ steps.tf-output.outputs.acr_name }}
 
       - name: Build and push backend
         uses: docker/build-push-action@v6
@@ -109,27 +117,37 @@ jobs:
           file: ./backend/Dockerfile.prod
           push: true
           tags: |
-            ${{ secrets.ACR_LOGIN_SERVER }}/e-learning-backend:latest
-            ${{ secrets.ACR_LOGIN_SERVER }}/e-learning-backend:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ${{ steps.tf-output.outputs.acr_name }}.azurecr.io/e-learning-backend:latest
+            ${{ steps.tf-output.outputs.acr_name }}.azurecr.io/e-learning-backend:${{ github.sha }}
 
       - name: Update backend Container App
         run: |
           az containerapp update \
             --name "ca-elearning-backend-${{ env.AZURE_ENV_SUFFIX }}" \
-            --resource-group "${{ secrets.RESOURCE_GROUP }}" \
-            --image "${{ secrets.ACR_LOGIN_SERVER }}/e-learning-backend:${{ github.sha }}"
+            --resource-group "${{ steps.tf-output.outputs.resource_group }}" \
+            --image "${{ steps.tf-output.outputs.acr_name }}.azurecr.io/e-learning-backend:${{ github.sha }}"
+
+      - name: Get Storage Account Name
+        id: storage
+        run: |
+          SA_NAME=$(az storage account list --resource-group "${{ steps.tf-output.outputs.resource_group }}" --query "[0].name" -o tsv)
+          echo "account_name=${SA_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Get Backend URL for Frontend Build
+        id: backend-url
+        run: |
+          BACKEND_URL=$(az containerapp show --name "ca-elearning-backend-${{ env.AZURE_ENV_SUFFIX }}" --resource-group "${{ steps.tf-output.outputs.resource_group }}" --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "api_url=https://${BACKEND_URL}" >> $GITHUB_OUTPUT
 
       - name: Build frontend
         run: npm run build:frontend
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ steps.backend-url.outputs.api_url }}
 
       - name: Upload frontend to Storage static website
         run: |
           az storage blob upload-batch \
-            --account-name "${{ secrets.FRONTEND_STORAGE_ACCOUNT }}" \
+            --account-name "${{ steps.storage.outputs.account_name }}" \
             --destination '$web' \
             --source frontend/dist \
             --overwrite \

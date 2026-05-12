@@ -13,6 +13,7 @@ terraform {
   #                -backend-config="storage_account_name=stterraformstate" \
   #                -backend-config="container_name=tfstate" \
   #                -backend-config="key=staging.tfstate"
+  backend "azurerm" {}
 }
 
 provider "azurerm" {

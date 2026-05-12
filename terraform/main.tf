@@ -70,6 +70,50 @@ resource "azurerm_key_vault" "main" {
   tags = local.common_tags
 }
 
+# Key Vault Secrets
+resource "azurerm_key_vault_secret" "db_connection_string" {
+  name         = "db-connection-string"
+  value        = "postgresql://${var.db_admin_username}:${var.db_admin_password}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/${var.db_name}"
+  key_vault_id = azurerm_key_vault.main.id
+}
+
+resource "azurerm_key_vault_secret" "jwt_secret" {
+  name         = "jwt-secret"
+  value        = var.jwt_secret
+  key_vault_id = azurerm_key_vault.main.id
+}
+
+resource "azurerm_key_vault_secret" "jwt_refresh_secret" {
+  name         = "jwt-refresh-secret"
+  value        = var.jwt_refresh_secret
+  key_vault_id = azurerm_key_vault.main.id
+}
+
+resource "azurerm_key_vault_secret" "stripe_secret_key" {
+  name         = "stripe-secret-key"
+  value        = var.stripe_secret_key
+  key_vault_id = azurerm_key_vault.main.id
+}
+
+resource "azurerm_key_vault_secret" "cloudinary_api_secret" {
+  name         = "cloudinary-api-secret"
+  value        = var.cloudinary_api_secret
+  key_vault_id = azurerm_key_vault.main.id
+}
+
+resource "azurerm_key_vault_secret" "acr_password" {
+  name         = "acr-password"
+  value        = azurerm_container_registry.main.admin_password
+  key_vault_id = azurerm_key_vault.main.id
+}
+
+# RBAC - Allow Container App to read Key Vault secrets
+resource "azurerm_role_assignment" "container_app_key_vault_access" {
+  scope              = azurerm_key_vault.main.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id       = azurerm_container_app.backend.identity[0].principal_id
+}
+
 # Container Registry
 resource "azurerm_container_registry" "main" {
   name                = "${replace(var.app_name, "-", "")}${var.environment}"
@@ -126,6 +170,9 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
   start_ip_address = "0.0.0.0"
   end_ip_address   = "0.0.0.0"
 }
+
+# PostgreSQL allows connections via firewall rule for Azure services
+# VNet integration not needed as Container App connects via FQDN with firewall rule
 
 # Redis Cache
 resource "azurerm_redis_cache" "main" {
@@ -295,6 +342,13 @@ resource "azurerm_container_app" "backend" {
     type = "SystemAssigned"
   }
 
+  depends_on = [
+    azurerm_postgresql_flexible_server_database.main,
+    azurerm_redis_cache.main,
+    azurerm_key_vault_secret.db_connection_string,
+    azurerm_key_vault_secret.jwt_secret
+  ]
+
   ingress {
     allow_insecure_connections = false
     external_enabled           = true
@@ -380,11 +434,6 @@ resource "azurerm_container_app" "backend" {
   }
 
   tags = local.common_tags
-
-  depends_on = [
-    azurerm_postgresql_flexible_server_database.main,
-    azurerm_redis_cache.main
-  ]
 }
 
 # Storage Account pour frontend static
@@ -409,153 +458,6 @@ resource "azurerm_storage_account_static_website" "frontend" {
 # CDN is disabled because AzureRM no longer allows creating new CDN resources after Oct 1, 2025.
 # Frontend will be served via Storage Static Website directly.
 
-# Azure Monitor Dashboard
-resource "azurerm_portal_dashboard" "main" {
-  name                = "dashboard-${var.app_name}-${var.environment}"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-
-  dashboard_properties = jsonencode({
-    lenses = {
-      "0" = {
-        order = 0
-        parts = {
-          "0" = {
-            position = { x = 0, y = 0, colSpan = 6, rowSpan = 4 }
-            metadata = {
-              inputs = [
-                {
-                  name  = "resourceId"
-                  value = azurerm_container_app.backend.id
-                }
-              ]
-              type = "Extension/Microsoft_Azure_Monitoring/PartType/MetricsChartPart"
-              settings = {
-                content = {
-                  settings = {
-                    yAxis = {
-                      isLogarithmic = false
-                    }
-                  }
-                  metrics = [
-                    {
-                      name            = "CPU (Average %)"
-                      resourceId      = azurerm_container_app.backend.id
-                      metricName      = "CpuUsagePercentage"
-                      aggregationType = 4
-                      namespace       = "Microsoft.App/containerApps"
-                      metricDisplayMode = 0
-                    }
-                  ]
-                }
-              }
-            }
-          }
-          "1" = {
-            position = { x = 6, y = 0, colSpan = 6, rowSpan = 4 }
-            metadata = {
-              inputs = [
-                {
-                  name  = "resourceId"
-                  value = azurerm_container_app.backend.id
-                }
-              ]
-              type = "Extension/Microsoft_Azure_Monitoring/PartType/MetricsChartPart"
-              settings = {
-                content = {
-                  settings = {
-                    yAxis = {
-                      isLogarithmic = false
-                    }
-                  }
-                  metrics = [
-                    {
-                      name            = "Memory (Average %)"
-                      resourceId      = azurerm_container_app.backend.id
-                      metricName      = "MemoryUsagePercentage"
-                      aggregationType = 4
-                      namespace       = "Microsoft.App/containerApps"
-                      metricDisplayMode = 0
-                    }
-                  ]
-                }
-              }
-            }
-          }
-          "2" = {
-            position = { x = 0, y = 4, colSpan = 6, rowSpan = 4 }
-            metadata = {
-              inputs = [
-                {
-                  name  = "resourceId"
-                  value = azurerm_application_insights.backend.id
-                }
-              ]
-              type = "Extension/Microsoft_Azure_Monitoring/PartType/MetricsChartPart"
-              settings = {
-                content = {
-                  settings = {
-                    yAxis = {
-                      isLogarithmic = false
-                    }
-                  }
-                  metrics = [
-                    {
-                      name            = "Failed Requests"
-                      resourceId      = azurerm_application_insights.backend.id
-                      metricName      = "requests/failed"
-                      aggregationType = 4
-                      namespace       = "microsoft.insights/components"
-                      metricDisplayMode = 0
-                    }
-                  ]
-                }
-              }
-            }
-          }
-          "3" = {
-            position = { x = 6, y = 4, colSpan = 6, rowSpan = 4 }
-            metadata = {
-              inputs = [
-                {
-                  name  = "resourceId"
-                  value = azurerm_postgresql_flexible_server.main.id
-                }
-              ]
-              type = "Extension/Microsoft_Azure_Monitoring/PartType/MetricsChartPart"
-              settings = {
-                content = {
-                  settings = {
-                    yAxis = {
-                      isLogarithmic = false
-                    }
-                  }
-                  metrics = [
-                    {
-                      name            = "PostgreSQL CPU %"
-                      resourceId      = azurerm_postgresql_flexible_server.main.id
-                      metricName      = "cpu_percent"
-                      aggregationType = 4
-                      namespace       = "Microsoft.DBforPostgreSQL/flexibleServers"
-                      metricDisplayMode = 0
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  })
-
-  tags = local.common_tags
-}
-
-locals {
-  common_tags = {
-    Environment = var.environment
-    Application = var.app_name
-    ManagedBy   = "Terraform"
-  }
-}
+# Monitor Dashboard - Disabled due to complexity
+# Use Azure Portal directly for monitoring instead
+# The monitoring stack is configured via Application Insights + Log Analytics + Metric Alerts

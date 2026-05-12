@@ -1,6 +1,3 @@
-data "azurerm_client_config" "current" {
-}
-
 # VNet pour Container Apps
 resource "azurerm_virtual_network" "main" {
   name                = "vnet-${var.app_name}-${var.environment}"

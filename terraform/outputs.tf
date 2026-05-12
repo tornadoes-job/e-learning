@@ -66,8 +66,8 @@ output "log_analytics_workspace_id" {
 }
 
 output "monitor_dashboard_url" {
-  value       = "https://portal.azure.com/#@/resource${azurerm_portal_dashboard.main.id}"
-  description = "URL to Azure Monitor Dashboard"
+  value       = "https://portal.azure.com/#@/resource/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${azurerm_resource_group.main.name}/overview"
+  description = "URL to Azure Portal Resource Group overview with monitoring resources"
 }
 
 output "alerts_created" {
@@ -81,9 +81,9 @@ output "alerts_created" {
   description = "Created metric alerts for monitoring"
 }
 
-output "monitoring_setup_complete" {
-  value       = "Application Insights + Log Analytics + 5 Metric Alerts + Dashboard configured"
-  description = "Monitoring stack status"
+output "monitoring_stack_status" {
+  value       = "Application Insights + Log Analytics + 5 Metric Alerts configured"
+  description = "Monitoring stack deployment status"
 }
 
 output "key_vault_name" {

@@ -109,9 +109,9 @@ resource "azurerm_key_vault_secret" "acr_password" {
 
 # RBAC - Allow Container App to read Key Vault secrets
 resource "azurerm_role_assignment" "container_app_key_vault_access" {
-  scope              = azurerm_key_vault.main.id
+  scope                = azurerm_key_vault.main.id
   role_definition_name = "Key Vault Secrets User"
-  principal_id       = azurerm_container_app.backend.identity[0].principal_id
+  principal_id         = azurerm_container_app.backend.identity[0].principal_id
 }
 
 # Container Registry
@@ -157,10 +157,10 @@ resource "azurerm_postgresql_flexible_server" "main" {
 
 # Database
 resource "azurerm_postgresql_flexible_server_database" "main" {
-  name            = var.db_name
-  server_id       = azurerm_postgresql_flexible_server.main.id
-  charset         = "UTF8"
-  collation       = "en_US.utf8"
+  name      = var.db_name
+  server_id = azurerm_postgresql_flexible_server.main.id
+  charset   = "UTF8"
+  collation = "en_US.utf8"
 }
 
 # Allow Azure services to PostgreSQL
@@ -229,15 +229,15 @@ resource "azurerm_monitor_metric_alert" "high_cpu" {
   description         = "Alert when CPU usage is high"
 
   criteria {
-    metric_name       = "CpuUsagePercentage"
-    operator          = "GreaterThan"
-    threshold         = 80
-    aggregation       = "Average"
-    metric_namespace  = "Microsoft.App/containerApps"
+    metric_name      = "CpuUsagePercentage"
+    operator         = "GreaterThan"
+    threshold        = 80
+    aggregation      = "Average"
+    metric_namespace = "Microsoft.App/containerApps"
   }
 
-  window_size = "PT5M"
-  frequency   = "PT1M"
+  window_size   = "PT5M"
+  frequency     = "PT1M"
   auto_mitigate = true
 
   tags = local.common_tags
@@ -251,15 +251,15 @@ resource "azurerm_monitor_metric_alert" "high_memory" {
   description         = "Alert when memory usage is high"
 
   criteria {
-    metric_name       = "MemoryUsagePercentage"
-    operator          = "GreaterThan"
-    threshold         = 85
-    aggregation       = "Average"
-    metric_namespace  = "Microsoft.App/containerApps"
+    metric_name      = "MemoryUsagePercentage"
+    operator         = "GreaterThan"
+    threshold        = 85
+    aggregation      = "Average"
+    metric_namespace = "Microsoft.App/containerApps"
   }
 
-  window_size = "PT5M"
-  frequency   = "PT1M"
+  window_size   = "PT5M"
+  frequency     = "PT1M"
   auto_mitigate = true
 
   tags = local.common_tags
@@ -273,15 +273,15 @@ resource "azurerm_monitor_metric_alert" "high_error_rate" {
   description         = "Alert when the Application Insights failed request count is high"
 
   criteria {
-    metric_name       = "requests/failed"
-    operator          = "GreaterThan"
-    threshold         = 10
-    aggregation       = "Count"
-    metric_namespace  = "microsoft.insights/components"
+    metric_name      = "requests/failed"
+    operator         = "GreaterThan"
+    threshold        = 10
+    aggregation      = "Count"
+    metric_namespace = "microsoft.insights/components"
   }
 
-  window_size = "PT5M"
-  frequency   = "PT1M"
+  window_size   = "PT5M"
+  frequency     = "PT1M"
   auto_mitigate = true
 
   tags = local.common_tags
@@ -295,15 +295,15 @@ resource "azurerm_monitor_metric_alert" "db_high_cpu" {
   description         = "Alert when PostgreSQL CPU usage is high"
 
   criteria {
-    metric_name       = "cpu_percent"
-    operator          = "GreaterThan"
-    threshold         = 80
-    aggregation       = "Average"
-    metric_namespace  = "Microsoft.DBforPostgreSQL/flexibleServers"
+    metric_name      = "cpu_percent"
+    operator         = "GreaterThan"
+    threshold        = 80
+    aggregation      = "Average"
+    metric_namespace = "Microsoft.DBforPostgreSQL/flexibleServers"
   }
 
-  window_size = "PT5M"
-  frequency   = "PT1M"
+  window_size   = "PT5M"
+  frequency     = "PT1M"
   auto_mitigate = true
 
   tags = local.common_tags
@@ -317,15 +317,15 @@ resource "azurerm_monitor_metric_alert" "redis_high_cpu" {
   description         = "Alert when Redis CPU usage is high"
 
   criteria {
-    metric_name       = "percentProcessorTime"
-    operator          = "GreaterThan"
-    threshold         = 75
-    aggregation       = "Average"
-    metric_namespace  = "Microsoft.Cache/redis"
+    metric_name      = "percentProcessorTime"
+    operator         = "GreaterThan"
+    threshold        = 75
+    aggregation      = "Average"
+    metric_namespace = "Microsoft.Cache/redis"
   }
 
-  window_size = "PT5M"
-  frequency   = "PT1M"
+  window_size   = "PT5M"
+  frequency     = "PT1M"
   auto_mitigate = true
 
   tags = local.common_tags
@@ -438,13 +438,13 @@ resource "azurerm_container_app" "backend" {
 
 # Storage Account pour frontend static
 resource "azurerm_storage_account" "frontend" {
-  name                     = "st${replace(var.app_name, "-", "")}${var.environment}"
-  location                 = azurerm_resource_group.main.location
-  resource_group_name      = azurerm_resource_group.main.name
-  account_tier             = "Standard"
-  account_replication_type = "GRS"
+  name                       = "st${replace(var.app_name, "-", "")}${var.environment}"
+  location                   = azurerm_resource_group.main.location
+  resource_group_name        = azurerm_resource_group.main.name
+  account_tier               = "Standard"
+  account_replication_type   = "GRS"
   https_traffic_only_enabled = true
-  min_tls_version          = "TLS1_2"
+  min_tls_version            = "TLS1_2"
 
   tags = local.common_tags
 }

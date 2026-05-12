@@ -72,11 +72,11 @@ output "monitor_dashboard_url" {
 
 output "alerts_created" {
   value = {
-    high_cpu           = azurerm_monitor_metric_alert.high_cpu.name
-    high_memory        = azurerm_monitor_metric_alert.high_memory.name
-    high_error_rate    = azurerm_monitor_metric_alert.high_error_rate.name
-    db_high_cpu        = azurerm_monitor_metric_alert.db_high_cpu.name
-    redis_high_cpu     = azurerm_monitor_metric_alert.redis_high_cpu.name
+    high_cpu        = azurerm_monitor_metric_alert.high_cpu.name
+    high_memory     = azurerm_monitor_metric_alert.high_memory.name
+    high_error_rate = azurerm_monitor_metric_alert.high_error_rate.name
+    db_high_cpu     = azurerm_monitor_metric_alert.db_high_cpu.name
+    redis_high_cpu  = azurerm_monitor_metric_alert.redis_high_cpu.name
   }
   description = "Created metric alerts for monitoring"
 }

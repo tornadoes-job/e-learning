@@ -7,7 +7,11 @@ terraform {
     }
   }
 
-  backend "azurerm" {}
+  # Using local backend for now - migrate to Azure Storage by running:
+  # terraform init -migrate-state -backend-config=backend.tfvars
+  backend "local" {
+    path = ".terraform/state/terraform.tfstate"
+  }
 }
 
 provider "azurerm" {

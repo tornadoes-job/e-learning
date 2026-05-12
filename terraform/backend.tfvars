@@ -1,0 +1,5 @@
+subscription_id      = "a540ae0c-d9d1-449b-9503-ec3d2f189381"
+resource_group_name  = "rg-elearning-tfstate"
+storage_account_name = "tfstateelearning"
+container_name       = "tfstate"
+key                  = "terraform.tfstate"
